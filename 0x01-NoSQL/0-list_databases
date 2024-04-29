@@ -1,0 +1,25 @@
+const MongoClient = require('mongodb').MongoClient;
+
+const url = 'mongodb://localhost:27017';
+
+MongoClient.connect(url, { useUnifiedTopology: true }, function(err, client) {
+    if (err) {
+        print('Error occurred while connecting to MongoDB:', err);
+        return;
+    }
+
+    const adminDb = client.db('admin');
+
+    adminDb.admin().listDatabases(function(err, dbs) {
+        if (err) {
+            print('Error occurred while listing databases:', err);
+            return;
+        }
+
+        print('List of databases:');
+        dbs.databases.forEach(db => print(`- ${db.name}`));
+
+        client.close();
+    });
+});
+
