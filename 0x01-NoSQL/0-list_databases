@@ -1,25 +1,17 @@
-const MongoClient = require('mongodb').MongoClient;
+// Connect to MongoDB server
+const conn = new Mongo();
 
-const url = 'mongodb://localhost:27017';
+// Get the admin database
+const adminDb = conn.getDB("admin");
 
-MongoClient.connect(url, { useUnifiedTopology: true }, function(err, client) {
-    if (err) {
-        print('Error occurred while connecting to MongoDB:', err);
-        return;
-    }
+// Get the list of databases
+const dbs = adminDb.adminCommand({ listDatabases: 1 });
 
-    const adminDb = client.db('admin');
-
-    adminDb.admin().listDatabases(function(err, dbs) {
-        if (err) {
-            print('Error occurred while listing databases:', err);
-            return;
-        }
-
-        print('List of databases:');
-        dbs.databases.forEach(db => print(`- ${db.name}`));
-
-        client.close();
-    });
+// Iterate over each database and print its name and size
+print("List of databases:");
+dbs.databases.forEach(db => {
+    const name = db.name;
+    const sizeGB = (db.sizeOnDisk / (1024 * 1024 * 1024)).toFixed(3);
+    print(`${name.padEnd(10)} ${sizeGB.padEnd()}GB`);
 });
 
