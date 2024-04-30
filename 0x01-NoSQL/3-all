@@ -1,0 +1,2 @@
+//This will list all the data in school collection
+db.school.find().pretty()
