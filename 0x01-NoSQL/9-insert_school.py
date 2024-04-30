@@ -10,5 +10,5 @@ def insert_school(mongo_collection, **kwargs):
     if mongo_collection.find() is None or kwargs is None:
         return []
     else:
-        mongo_collection.insert_many([kwargs])
-        return mongo_collection.find()
+        result = mongo_collection.insert_one(kwargs)
+        return str(result.inserted_id)
