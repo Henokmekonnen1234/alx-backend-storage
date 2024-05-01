@@ -1,51 +1,27 @@
-#!/usr/bin/env python3
-"""web module
-"""
-from functools import wraps
-from typing import Callable
-import redis
 import requests
+import redis
+import time
 
-_redis = redis.Redis()
-_redis.flushdb()
+# Connect to Redis
+r = redis.Redis(host='localhost', port=6379, db=0)
 
-
-def count_requests(method: Callable) -> Callable:
-    """count_requests function
-
-    Args:
-        method (Callable): method
-
-    Returns:
-        Callable: wrapper
-    """
-    @wraps(method)
-    def wrapper(*args, **kwargs):
-        """wrapper function
-
-        Returns:
-            [type]: wrapper
-        """
-        url = args[0]
-        cached = _redis.get(f"cached:{url}")
-        if cached:
-            return cached.decode("utf-8")
-        response = method(*args, **kwargs)
-        _redis.incr(f"count:{url}")
-        _redis.setex(f"cached:{url}", 10, response)
-        return response
-    return wrapper
-
-
-@count_requests
 def get_page(url: str) -> str:
-    """get_page function
+    # Check if the URL is in the cache
+    cached_content = r.get(url)
+    if cached_content:
+        print("Retrieving from cache...")
+        return cached_content.decode('utf-8')
 
-    Args:
-        url (str): url
+    # If not in cache, fetch the content
+    print("Fetching from URL...")
+    response = requests.get(url)
+    content = response.text
 
-    Returns:
-        str: response
-    """
-    response = requests.get(url, timeout=10)
-    return response.text
+    # Store the content in cache with expiration time
+    r.setex(url, 10, content)
+
+    # Update the access count for this URL
+    count_key = f"count:{url}"
+    r.incr(count_key)
+
+    return content
